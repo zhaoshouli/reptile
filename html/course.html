@@ -1,0 +1,14 @@
+<h1>Tencent Education</h1>
+<ul>
+    <a href="http://localhost:8080/english" class="button">英文明细</a>
+    <a href="http://localhost:8080/arith" class="button">数学明细</a>
+    <a href="http://localhost:8080/chinese" class="button">语文明细</a>
+
+    {{range .Education}}
+        <p>
+            {{.Subject}}
+            {{.Number}}
+        </p>
+    {{end}}
+
+</ul>

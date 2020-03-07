@@ -1,0 +1,13 @@
+<h1>Tencent Education</h1>
+<ul>
+    {{range .Courses}}
+        <li>
+            {{.Courses_id}}
+            {{.Title}}
+            {{.Price}}
+            {{.TeacherName}}
+            {{.Link}}
+        </li>
+
+    {{end}}
+</ul>
