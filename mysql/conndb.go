@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/reptile/config"
-	_ "github.com/reptile/dependency_pack/go-sql-driver/mysql"
+	_ "github.com/reptile/dependency_pack/go-sql-driver"
 	"os"
 )
 
