@@ -25,7 +25,9 @@ mysql目录中conndb.go为连接数据文件包含数据的初始化连接
 
 解析页面主要用到了[goquery](https://github.com/goquery)这个包来解决的
 
-注意！mac环境下logic目录下logic.go文件中
+
+*** 注意！mac环境下logic目录下logic.go文件中
+
 ```
 switch fmt.Sprint(runtime.GOOS) {
 	//mac环境下如果编译报了errer：unknown field 'HideWindow' in struct literal of type syscall.SysProcAttr
