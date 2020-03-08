@@ -2,11 +2,11 @@
 <ul>
     {{range .Courses}}
         <li>
-            {{.Courses_id}}
-            {{.Title}}
-            {{.Price}}
-            {{.TeacherName}}
-            {{.Link}}
+             <p><font size="3" color="#6b8e23">课程ID：</font>{{.Courses_id}}</p>
+             <p><font size="3" color="#6b8e23">课程标题：</font>{{.Title}}</p>
+             <p><font size="3" color="#6b8e23">课程价格：</font>{{.Price}}</p>
+             <p><font size="3" color="#6b8e23">教师名称</font>{{.TeacherName}}</p>
+             <p><font size="3" color="#6b8e23">课程链接：</font>{{.Link}}</p>
         </li>
 
     {{end}}

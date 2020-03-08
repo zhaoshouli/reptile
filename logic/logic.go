@@ -2,9 +2,9 @@ package logic
 
 import (
 	"fmt"
-	"github.com/reptile/config"
-	"github.com/reptile/dependency_pack/goquery"
-	"github.com/reptile/mysql"
+	"github.com/zhaoshouli/reptile/config"
+	"github.com/zhaoshouli/reptile/dependency_pack/goquery"
+	"github.com/zhaoshouli/reptile/mysql"
 	"html/template"
 	"log"
 	"net/http"
@@ -36,16 +36,7 @@ type Courses struct {
 func Start(url string) {
 	fmt.Println("正在爬取腾讯企鹅辅导相关数据请稍等.....")
 	fmt.Println("爬取完成后会自动打开浏览器并浏览数据网站！")
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
-	}
-
-	html, err := goquery.NewDocumentFromReader(resp.Body)
+	html := GetHtmlData(url)
 	var List  = make(map[string]string)
 	List = GetCourseList(html, List)
 	s := GetCourseNumberList(List)
@@ -69,13 +60,13 @@ func Start(url string) {
 	}
 	wg.Wait()
 
-	tmpl := template.Must(template.ParseFiles(config.HTMLAddr + "/html/course.html"))
+	tmpl := template.Must(template.ParseFiles(config.HTMLAddr + "/reptile/html/course.html"))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, struct{ Education []Education }{ress})
 	})
 
-	tmpl1 := template.Must(template.ParseFiles(config.HTMLAddr + "/html/courseList.html"))
+	tmpl1 := template.Must(template.ParseFiles(config.HTMLAddr + "/reptile/html/courseList.html"))
 	http.HandleFunc("/arith", func(w http.ResponseWriter, r *http.Request) {
 		queryData := QueryDb("数学")
 		tmpl1.Execute(w, struct{ Courses []Courses }{queryData})
@@ -97,27 +88,30 @@ func Start(url string) {
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 		cmd.Start()
 	case "darwin":
-		exec.Command(`open`, `https://www.jianshu.com`).Start()
+		exec.Command(`open`, `http://localhost:8080`).Start()
 	case "linux":
-		exec.Command(`xdg-open`, `https://www.jianshu.com`).Start()
+		exec.Command(`xdg-open`, `http://localhost:8080`).Start()
 	}
 
 	log.Println("Listen Serve Addr : http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
 
-func GetCourseList(html *goquery.Document, courseList map[string]string) map[string]string {
+//获取课程种类
+func GetCourseList(html goquery.Document, courseList map[string]string) map[string]string {
 	// '//a[@class="tt"]/@href'
 	html.Find(".subject-item").Find("a[class]").Each(func(i int, selection *goquery.Selection) {
 		url, _ := selection.Attr("href")
 		course1 := selection.Text()
-		if course1 != "全部" && course1 != "讲座" {
+		//这里把全部过滤掉
+		if course1 != "全部" {
 			courseList[course1] = "https://" + url[2:]
 		}
 	})
 	return courseList
 }
 
+//获取某一学科所有阶段的课程连接
 func GetCourseNumberList(courseList map[string]string) map[string][]string {
 	var result = make(map[string][]string)
 
@@ -130,16 +124,7 @@ func GetCourseNumberList(courseList map[string]string) map[string][]string {
 }
 
 func GetCourseSum(url string) (res []string) {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
-	}
-
-	html, err := goquery.NewDocumentFromReader(resp.Body)
+	html := GetHtmlData(url)
 
 	html.Find("div[class=grade-area]").Find("a[class=grade-item]").Each(func(i int, selection *goquery.Selection) {
 		url, _ := selection.Attr("href")
@@ -150,6 +135,7 @@ func GetCourseSum(url string) (res []string) {
 	return res
 }
 
+//获取某一学科的某一阶段课程中的所有课程链接
 func GetCourseSumList(val map[string][]string) (url map[string][]string) {
 	//var wg *sync.WaitGroup
 
@@ -159,31 +145,7 @@ func GetCourseSumList(val map[string][]string) (url map[string][]string) {
 		func() {
 			for _, vv := range v {
 				//fmt.Println(s, ":", string(vv))
-				resp, err := http.Get(string(vv))
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusOK {
-					log.Printf("Error: status code %d", resp.StatusCode)
-					//wg.Done()
-					return
-				}
-
-				//bytes, err := ioutil.ReadAll(resp.Body)
-				//
-				//if err != nil {
-				//	fmt.Println("ioutil.ReadAll err=",err)
-				//	return
-				//}
-				//fmt.Println(string(bytes))
-
-				html, err := goquery.NewDocumentFromReader(resp.Body)
-				if err != nil {
-					log.Println(err)
-					return
-				}
+				html := GetHtmlData(string(vv))
 
 				html.Find("li[class=courseGroup-card--wrapper]").Find("a[data-modid=sys_course_collection]").Each(func(i int, selection *goquery.Selection) {
 					urlsss, _ := selection.Attr("href")
@@ -220,34 +182,10 @@ func GetCourseSumList(val map[string][]string) (url map[string][]string) {
 	return url
 }
 
+//获取某一学科的某一阶段课程中某一课程链接中的数据（例如：课程ID、课程价格、任课教师等）
+//而且并发的写进数据库
 func GetCourseData(coursename, url string, wg *sync.WaitGroup) {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Println(err)
-		wg.Done()
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Error: status code %d", resp.StatusCode)
-		wg.Done()
-		return
-	}
-
-	//bytes, err := ioutil.ReadAll(resp.Body)
-	//
-	//if err != nil {
-	//	fmt.Println("ioutil.ReadAll err=",err)
-	//	return
-	//}
-	//fmt.Println(string(bytes))
-
-	html, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		log.Println(err)
-		wg.Done()
-		return
-	}
+	html := GetHtmlData(url)
 
 	course := Courses{}
 
@@ -316,4 +254,21 @@ func QueryDb(course string) (res []Courses) {
 		courses = Courses{}
 	}
 	return res
+}
+
+func GetHtmlData(url string)  goquery.Document {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	html, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Print(err)
+	}
+	return *html
 }
