@@ -25,4 +25,20 @@ mysql目录中conndb.go为连接数据文件包含数据的初始化连接
 
 解析页面主要用到了[goquery](https://github.com/goquery)这个包来解决的
 
+注意！mac环境下
+```
+switch fmt.Sprint(runtime.GOOS) {
+	//mac环境下如果编译报了errer：unknown field 'HideWindow' in struct literal of type syscall.SysProcAttr
+	//这个错误就将下面这个代码注释掉没有的话就不需要注释
+	//case "windows":
+		//cmd := exec.Command(`cmd`, `/c`, `start`, `http://localhost:8080`)
+		//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		//cmd.Start()
+	case "darwin":
+		exec.Command(`open`, `http://localhost:8080`).Start()
+	case "linux":
+		exec.Command(`xdg-open`, `http://localhost:8080`).Start()
+	}
+```
+
 爬取完数据会自动打开浏览器，如果没有自动跳转则打开[localhost:8080](http://localhost:8080)
