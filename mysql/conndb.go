@@ -3,8 +3,8 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/reptile/config"
-	_ "github.com/reptile/dependency_pack/go-sql-driver"
+	"github.com/zhaoshouli/reptile/config"
+	_ "github.com/zhaoshouli/reptile/dependency_pack/go-sql-driver"
 	"os"
 )
 

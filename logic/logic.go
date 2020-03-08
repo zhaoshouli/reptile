@@ -2,9 +2,9 @@ package logic
 
 import (
 	"fmt"
-	"github.com/reptile/config"
-	"github.com/reptile/dependency_pack/goquery"
-	"github.com/reptile/mysql"
+	"github.com/zhaoshouli/reptile/config"
+	"github.com/zhaoshouli/reptile/dependency_pack/goquery"
+	"github.com/zhaoshouli/reptile/mysql"
 	"html/template"
 	"log"
 	"net/http"
